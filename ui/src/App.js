@@ -29,22 +29,35 @@ function App() {
     setIsLoading(true);
     
     // TODO: Replace with actual API call to backend
-    setTimeout(() => {
-      // Mock calculation for now
-      const localCommission = parseFloat(formData.localSalesCount) * parseFloat(formData.averageSaleAmount) * 0.20;
-      const foreignCommission = parseFloat(formData.foreignSalesCount) * parseFloat(formData.averageSaleAmount) * 0.35;
-      const avalphaTechnologiesTotal = localCommission + foreignCommission;
-      
-      const competitorLocal = parseFloat(formData.localSalesCount) * parseFloat(formData.averageSaleAmount) * 0.02;
-      const competitorForeign = parseFloat(formData.foreignSalesCount) * parseFloat(formData.averageSaleAmount) * 0.0755;
-      const competitorTotal = competitorLocal + competitorForeign;
-      
-      setResults({
-        avalphaTechnologiesCommission: avalphaTechnologiesTotal.toFixed(2),
-        competitorCommission: competitorTotal.toFixed(2)
-      });
-      setIsLoading(false);
-    }, 1000);
+    fetch("https://localhost:5000/Commision/CalculateCommission", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        localSalesCount: formData.localSalesCount,
+        foreignSalesCount: formData.foreignSalesCount,
+        averageSaleAmount: formData.averageSaleAmount
+      })
+    })
+      .then((resp) => {
+        if (!resp.ok) {
+          throw new Error("API failed");
+        }
+        return resp.json();
+      })
+      .then((data) => {
+        setResults({
+          avalphaTechnologiesCommission: data.avalphaTechnologiesCommissionAmount.toFixed(2),
+          competitorCommission: data.competitorCommissionAmount.toFixed(2)
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      })
   };
 
   return (

@@ -1,33 +1,35 @@
 using Microsoft.AspNetCore.Mvc;
-
+using AvalphaTechnologies.CommissionCalculator.DTO;
+using AvalphaTechnologies.CommissionCalculator.Services;
 namespace AvalphaTechnologies.CommissionCalculator.Controllers
 {
     [ApiController]
     [Route("[controller]")]
     public class CommisionController : ControllerBase
     {
-        [ProducesResponseType(typeof(CommissionCalculationResponse), 200)]
-        [HttpPost]
-        public IActionResult Calculate(CommissionCalculationRequest calculationRequest)
+        private ICommissionCalculator _commissionCalService;
+        public CommisionController(ICommissionCalculator commissionCalculator)
         {
-            return Ok(new CommissionCalculationResponse() { 
-                AvalphaTechnologiesCommissionAmount = 999,
-                CompetitorCommissionAmount = 100
-            });
+            _commissionCalService=commissionCalculator;
+        }
+
+        [ProducesResponseType(typeof(CommissionCalResponseDTO), 200)]
+        [HttpPost]
+        [Route("CalculateCommission")]
+        public IActionResult Calculate(CommissionCalRequestDTO calculationRequest)
+        {
+            if (calculationRequest.LocalSalesCount < 0 || calculationRequest.ForeignSalesCount < 0 || calculationRequest.AverageSaleAmount < 0)
+            {
+                return BadRequest(new ErrorResponseDTO { ErrorMessage="Sales count must be >=0"});   
+            }
+
+            if (calculationRequest.LocalSalesCount > 100000 || calculationRequest.ForeignSalesCount > 100000)
+            {
+                return BadRequest(new ErrorResponseDTO {ErrorMessage="Sales count too large"});   
+            }
+            CommissionCalResponseDTO response=_commissionCalService.CalculateCommission(calculationRequest);
+            return Ok(response);
         }
     }
 
-    public class CommissionCalculationRequest
-    {
-        public int LocalSalesCount { get; set; }
-        public int ForeignSalesCount { get; set; }
-        public decimal AverageSaleAmount { get; set; }
-    }
-
-    public class CommissionCalculationResponse
-    {
-        public decimal AvalphaTechnologiesCommissionAmount { get; set; }
-
-        public decimal CompetitorCommissionAmount { get; set; }
-    }
 }
